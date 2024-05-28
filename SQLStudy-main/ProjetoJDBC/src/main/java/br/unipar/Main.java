@@ -1,112 +1,96 @@
 package br.unipar;
 
-import java.util.Scanner;
+import java.sql.*;
 
 public class Main {
 
+    private static final String url = "jdbc:postgresql://localhost:5432/exemplo1";
+    private static final String user = "postgres";
+    private static final String password = "admin123";
+
     public static void main(String[] args) {
-        Scanner opcoes = new Scanner(System.in);
+        crateTableUser();
 
-        while (true) {
-            System.out.println("COM QUAL TABELA VOCÊ DESEJA OPERAR:");
-            System.out.println("1- USUARIOS");
-            System.out.println("2- CLIENTES");
-            System.out.println("3- PRODUTOS");
-            System.out.println("4- VENDAS");
-            System.out.println("5- Sair do programa");
-            System.out.println("Selecione a operação que deseja executar:");
+        //inserirUsuario("Taffe", "12345", "Fabio", "1890-01-01");
 
-            int opcao = opcoes.nextInt();
-            opcoes.nextLine(); // Limpar o buffer de entrada
+        listarTodosUsuarios();
+    }
 
-            switch (opcao) {
-                case 1:
-                     usuario();
-                    break;
-                case 2:
-                    clientes();
-                    break;
-                case 3:
-                    produtos();
-                    break;
-                case 4:
-                    vendas();
-                    break;
-                case 5:
-                    System.out.println("Saindo do programa...");
-                    return;
-                default:
-                    System.out.println("Opção inválida!");
-            }
+
+    public static Connection connection() throws SQLException {
+        //localhost -> Onde está o banco
+        //5432 -> porta padrão do banco
+        return DriverManager.getConnection(url, user, password);
+    }
+
+    public static void crateTableUser() {
+        try {
+            Connection conn = connection(); // em caso de problema o catch é executado // in case of problem, catch is executed
+
+            Statement statement = conn.createStatement(); // Criar acesso para o banco para executar
+            String sql = " CREATE TABLE IF NOT EXISTS usuarios ( "
+                    + "codigo SERIAL PRIMARY KEY, "
+                    + " username VARCHAR(50) UNIQUE NOT NULL, "
+                    + " password VARCHAR(300) NOT NULL, "
+                    + " nome VARCHAR(50) NOT NULL,"
+                    + " nascimento DATE)";
+
+            statement.executeUpdate(sql); // Cria a tabela no banco
+            System.out.println("TABELA CRIADA");
+
+        } catch (SQLException exception) {
+            exception.printStackTrace();
         }
     }
 
-    public static void usuario() {
-        Scanner opcoesIns = new Scanner(System.in);
-        while (true) {
-            System.out.println("Selecione a operação que deseja realizar na tabela usuarios:");
-            System.out.println("1- Inserir Usuarios");
-            System.out.println("2- listar usuarios");
-            System.out.println("3- alterar usuarios");
-            System.out.println("4- deletar tabela");
-            System.out.println("5- Sair");
+    public static void inserirUsuario(String username, String password, String nome, String dataNascimento) {
+        try {
 
-            int opcao = opcoesIns.nextInt();
-            opcoesIns.nextLine();
+            //Abre a conexão com o banco
+            Connection conn = connection(); // em caso de problema o catch é executado // in case of problem, catch is executed
 
-            switch (opcao) {
-                case 1:
-                    funcoesUsuario.cadastrarUsuario();
-                    break;
-                case 2:
-                    funcoesUsuario.listarTodosUsuarios();
-                    break;
-                case 3:
-                    System.out.println("Funcionalidade não implementada.");
-                    break;
-                case 4:
-                    funcoesUsuario.excluirTabelaUsuario();
-                    break;
-                case 5:
-                    System.out.println("Saindo do programa...");
-                    return;
-                default:
-                    System.out.println("Opção inválida!");
-            }
+            //Prepara a execução de um SQL
+            PreparedStatement preparedStatement = conn.prepareStatement(
+                    "INSERT INTO usuarios (username, password, nome, nascimento)"
+
+                            + "VALUES(?,?,?,?)"
+
+            );
+
+            preparedStatement.setString(1, username);
+            preparedStatement.setString(2, password);
+            preparedStatement.setString(3, nome);
+            preparedStatement.setDate(4, java.sql.Date.valueOf(dataNascimento));
+
+            preparedStatement.executeUpdate();
+
+            System.out.printf("usuario inserido com sucesso");
+
+
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
         }
     }
-    public static void clientes() {
-        Scanner opcoesIns = new Scanner(System.in);
-        while (true) {
-            System.out.println("Selecione a operação que deseja realizar na tabela clientes:");
-            System.out.println("1- Inserir clientes");
-            System.out.println("2- listar clientes");
-            System.out.println("3- alterar clientes");
-            System.out.println("4- deletar tabela");
-            System.out.println("5- Sair");
+    public static void listarTodosUsuarios(){
 
-            int opcao = opcoesIns.nextInt();
-            opcoesIns.nextLine();
+        try {
+            Connection conn = connection();
 
-            switch (opcao) {
-                case 1:
-                    funcoesCliente.cadastrarClientes();
-                    break;
-                case 2:
-                    funcoesCliente.listarTodosClientes();
-                    break;
-                case 3:
-                    System.out.println("Funcionalidade não implementada.");
-                    break;
-                case 4:
-                    funcoesCliente.excluirTabelaClientes();
-                    break;
-                case 5:
-                    System.out.println("Saindo do programa...");
-                    return;
-                default:
-                    System.out.println("Opção inválida!");
+            Statement statement = conn.createStatement();
+
+            ResultSet result = statement.executeQuery("SELECT * FROM usuarios");
+
+            while (result.next()) {
+                System.out.println(result.getInt("codigo"));
+
             }
         }
+
+        catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+
+
     }
+
 }
